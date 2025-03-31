@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cubing Timer</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            font-size: 24px;
+            font-weight: bold;
+            padding: 10px;
+            background-color: #333;
+            color: white;
+            display: flex;
+            align-items: center;
+        }
+        #cubeType {
+            margin-right: 10px;
+            padding: 5px;
+            font-size: 16px;
+        }
+        .container {
+            display: flex;
+            flex-direction: row;
+            height: 90vh;
+        }
+        .left-panel {
+            width: 113px;
+            overflow-y: auto;
+            border-right: 2px solid #ddd;
+            padding: 10px;
+        }
+        .timer-area {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .timer {
+            font-size: 60px;
+            font-weight: bold;
+        }
+        .stats-table {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            border-collapse: collapse;
+            background: white;
+            border: 1px solid black;
+        }
+        .scrambleGen {
+          position: absolute;
+          top:10px;
+          right:10px;
+          border: 1px solid black;
+          width:200px;
+        }
+        .stats-table th, .stats-table td {
+            border: 1px solid black;
+            padding: 5px;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <input class="cubeType" type="text" id="cubeType" placeholder="Enter cube type (e.g., 3x3, 5x5)">
+        Cubing Timer
+    </header>
+    <div class="container">
+        <div class="left-panel">
+            <table id="solveTable">
+                <thead>
+                    <tr><th>Index</th><th>Time (s)</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <div class="timer-area">
+            <div class="scrambleGen">
+              <input type="text" id="scrambleInstructions">
+              <button id="generate">Generate Scramble</button>
+              <p id="scrambleOutput"></p>
+            </div>
+            <table class="stats-table">
+                <tr>
+                    <th></th>
+                    <th>Current</th>
+                    <th>Best</th>
+                </tr>
+                <tr>
+                    <td>Time</td>
+                    <td id="currentTime">0.00</td>
+                    <td id="bestTime">0.00</td>
+                </tr>
+                <tr>
+                    <td>AO5</td>
+                    <td id="currentAO5"> </td>
+                    <td id="bestAO5"> </td>
+                </tr>
+                <tr>
+                    <td>AO20</td>
+                    <td id="currentAO20"> </td>
+                    <td id="bestAO20"> </td>
+                </tr>
+            </table>
+            <div class="timer" id="timer">0.00</div>
+        </div>
+    </div>
+
+    <script>
+      let startTime, interval;
+      let running = false;
+      let times = {};
+      let timerState = "stopped";
+      let bestAO5 = {};
+      let bestAO20 = {};
+      let bestTime = {};
+
+      function loadData() {
+        let storedTimes = localStorage.getItem("times");
+        let storedBestTime = localStorage.getItem("bestTime");
+        let storedBestAO5 = localStorage.getItem("bestAO5");
+        let storedBestAO20 = localStorage.getItem("bestAO20");
+
+        times = storedTimes ? JSON.parse(storedTimes) : {};
+        bestTime = storedBestTime ? JSON.parse(storedBestTime) : {};
+        bestAO5 = storedBestAO5 ? JSON.parse(storedBestAO5) : {};
+        bestAO20 = storedBestAO20 ? JSON.parse(storedBestAO20) : {};
+
+        loadCubeTypeData();
+      }
+        // Save data to localStorage
+      function saveData() {
+        localStorage.setItem("times", JSON.stringify(times));
+        localStorage.setItem("bestTime", JSON.stringify(bestTime));
+        localStorage.setItem("bestAO5", JSON.stringify(bestAO5));
+        localStorage.setItem("bestAO20", JSON.stringify(bestAO20));
+      }
+      
+      document.addEventListener('keyup', function(event) {
+        if(event.code == "Space"){
+          if(timerState == "ready"){
+            document.getElementById("timer").setAttribute("style", "color: green;");
+            startTimer()
+            timerState = "running"
+          }
+          if(timerState == "stopping"){
+            timerState = "stopped"
+          } 
+        }
+      });
+        
+      document.addEventListener('keydown', function(event) {
+        if(event.code == "Space"){
+          if(timerState == "running"){
+            stopTimer()
+            timerState = "stopping"
+            document.getElementById("timer").setAttribute("style", "color: #000000;");
+          }
+          if(timerState == "stopped"){
+            document.getElementById("timer").setAttribute("style", "color: red;");
+            timerState = "ready"
+          } 
+        }
+      });
+      
+      function updateTimer() {
+        let elapsedTime = ((Date.now() - startTime) / 1000).toFixed(2);
+        document.getElementById("timer").textContent = elapsedTime;
+      }
+
+      function generateScramble() {
+        var sections = [[]];
+        for (let i of document.getElementById("scrambleInstructions").value.split(";")) {
+          var section = [];
+          for (let j of i.split(",")) {
+            section.push(j || "");
+          }
+          sections.push(section);
+        }
+            
+        var end = "";
+        for (let i = 0; i < Sum(sections) * 2; i++) {
+          for (let j of sections) {
+            var sel = RandElm(j) || "";
+            var move = sel, prefix = "";
+                    
+            if (sel.includes("(") && sel.includes(")")) {
+              var prefixOptions = sel.substring(sel.indexOf("(") + 1, sel.indexOf(")")).split(".");
+              prefix = RandElm(prefixOptions);
+              move = sel.substring(sel.indexOf(")") + 1);
+            }
+                    
+            end += prefix + move;
+          }
+          if (i != Sum(sections) * 2 - 1) {
+            end += ", ";
+          }
+        }
+        document.getElementById("scrambleOutput").textContent = end;
+      }
+
+      document.getElementById("generate").addEventListener("click", generateScramble);
+      function RandElm(x){ return x[Math.floor(Math.random() * x.length)]; }
+      function Sum(x){ return x.reduce((acc, i) => acc + i.length, 0); }
+
+      function calculateAverage(times, count) {
+        if(times.length >= count){
+          let sec = times.slice(sec.length-count, sec.length);
+          let end = 0;
+          for(let i of sec){
+            end = end + parseInt(i);
+          }
+          end = end / count;
+          return end  
+        }
+      }
+      
+      function loadCubeTypeData() {
+        let cubeType = document.getElementById("cubeType").value || "Default";
+        updateDisplay(cubeType);
+        updateStats(cubeType);
+      }
+
+      function updateStats(cubeType) {
+        let AO5 = bestAO5[cubeType] || Infinity;
+        let AO20 = bestAO20[cubeType] || Infinity;
+        let time = bestTime[cubeType] || Infinity;
+        let allTimes = times[cubeType] || [];
+
+        if (parseFloat(document.getElementById("timer").textContent) < time) {
+          time = parseFloat(document.getElementById("timer").textContent);
+          bestTime[cubeType] = time;
+        }
+        document.getElementById("currentTime").textContent = parseFloat(document.getElementById("timer").textContent);
+        document.getElementById("bestTime").textContent = time.toFixed(2);
+
+        let ao5 = " ";
+        if (allTimes.length >= 5) {
+          let l5 = allTimes.slice(-5);
+          ao5 = (l5.reduce((a, b) => a + b, 0) / 5).toFixed(2);
+        }
+        document.getElementById("currentAO5").textContent = ao5;
+        if (ao5 !== " " && parseFloat(ao5) < AO5) {
+          AO5 = parseFloat(ao5);
+          bestAO5[cubeType] = AO5;
+        }
+        document.getElementById("bestAO5").textContent = AO5 !== Infinity ? AO5.toFixed(2) : " ";
+
+        let ao20 = " ";
+        if (allTimes.length >= 20) {
+          let l20 = allTimes.slice(-20);
+          ao20 = (l20.reduce((a, b) => a + b, 0) / 20).toFixed(2);
+        }
+        document.getElementById("currentAO20").textContent = ao20;
+        if (ao20 !== " " && parseFloat(ao20) < AO20) {
+          AO20 = parseFloat(ao20);
+          bestAO20[cubeType] = AO20;
+        }
+        document.getElementById("bestAO20").textContent = AO20 !== Infinity ? AO20.toFixed(2) : " ";
+
+        saveData(); // Save updated data
+      }
+
+      function startTimer() {
+        startTime = Date.now();
+        running = true;
+        interval = setInterval(updateTimer, 10);
+      }
+
+      function stopTimer() {
+        clearInterval(interval);
+        running = false;
+        let finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+        let cubeType = document.getElementById("cubeType").value || "Default";
+
+        if (!times[cubeType]) {
+          times[cubeType] = [];
+        }
+        times[cubeType].push(parseFloat(finalTime));
+        updateDisplay(cubeType);
+        updateStats(cubeType);
+      }
+
+      function updateDisplay(cubeType) {
+        let tableBody = document.getElementById("solveTable").getElementsByTagName('tbody')[0];
+        tableBody.innerHTML = "";
+        let allTimes = times[cubeType] || [];
+        allTimes.forEach((time, index) => {
+          let newRow = tableBody.insertRow();
+          newRow.insertCell(0).textContent = index + 1;
+          newRow.insertCell(1).textContent = time.toFixed(2);
+        });
+      }
+      
+      document.getElementById("cubeType").addEventListener("input", loadCubeTypeData);
+      
+      window.onload = loadData;
+    </script>
+</body>
+</html>
