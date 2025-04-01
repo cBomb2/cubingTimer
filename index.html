@@ -241,13 +241,18 @@
         let AO20 = bestAO20[cubeType] || Infinity;
         let time = bestTime[cubeType] || Infinity;
         let allTimes = times[cubeType] || [];
+        let besTime = Infinity
 
+        for(let i of times[cubeType]){
+          if(i < besTime){
+            besTime = i
+          }
+        }
         if (parseFloat(document.getElementById("timer").textContent) < time) {
           time = parseFloat(document.getElementById("timer").textContent);
-          bestTime[cubeType] = time;
         }
-        document.getElementById("currentTime").textContent = parseFloat(document.getElementById("timer").textContent);
-        document.getElementById("bestTime").textContent = time !== Infinity ? time.toFixed(2) : "N/A";
+        document.getElementById("currentTime").textContent = times[cubeType][times[cubeType].length-1].toFixed(2);
+        document.getElementById("bestTime").textContent = besTime.toFixed(2);
 
         let ao5 = "N/A";
         if (allTimes.length >= 5) {
@@ -285,16 +290,29 @@
       function stopTimer() {
         clearInterval(interval);
         running = false;
-        let finalTime = ((Date.now() - startTime) / 1000).toFixed(2);
+        let finalTime = parseFloat(((Date.now() - startTime) / 1000).toFixed(2));
         let cubeType = document.getElementById("cubeType").value || "Default";
 
         if (!times[cubeType]) {
           times[cubeType] = [];
         }
-        times[cubeType].push(parseFloat(finalTime));
+        times[cubeType].push(finalTime);
+
+        // Update best time
+        if (!bestTime[cubeType] || finalTime < bestTime[cubeType]) {
+          bestTime[cubeType] = finalTime;
+        }
+
+        // Save all data to localStorage
+        localStorage.setItem("times", JSON.stringify(times));
+        localStorage.setItem("bestTime", JSON.stringify(bestTime));
+        localStorage.setItem("bestAO5", JSON.stringify(bestAO5));
+        localStorage.setItem("bestAO20", JSON.stringify(bestAO20));
+
         updateDisplay(cubeType);
         updateStats(cubeType);
       }
+
 
       function updateDisplay(cubeType) {
         let tableBody = document.getElementById("solveTable").getElementsByTagName('tbody')[0];
