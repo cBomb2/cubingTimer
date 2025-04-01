@@ -126,10 +126,10 @@
       let bestTime = {};
 
       function loadData() {
-        let storedTimes = localStorage.getItem("times");
-        let storedBestTime = localStorage.getItem("bestTime");
-        let storedBestAO5 = localStorage.getItem("bestAO5");
-        let storedBestAO20 = localStorage.getItem("bestAO20");
+        let storedTimes = localStorage.getItem("times1");
+        let storedBestTime = localStorage.getItem("bestTime1");
+        let storedBestAO5 = localStorage.getItem("bestAO51");
+        let storedBestAO20 = localStorage.getItem("bestAO201");
 
         times = storedTimes ? JSON.parse(storedTimes) : {};
         bestTime = storedBestTime ? JSON.parse(storedBestTime) : {};
@@ -140,10 +140,10 @@
       }
         // Save data to localStorage
       function saveData() {
-        localStorage.setItem("times", JSON.stringify(times));
-        localStorage.setItem("bestTime", JSON.stringify(bestTime));
-        localStorage.setItem("bestAO5", JSON.stringify(bestAO5));
-        localStorage.setItem("bestAO20", JSON.stringify(bestAO20));
+        localStorage.setItem("times1", JSON.stringify(times));
+        localStorage.setItem("bestTime1", JSON.stringify(bestTime));
+        localStorage.setItem("bestAO51", JSON.stringify(bestAO5));
+        localStorage.setItem("bestAO201", JSON.stringify(bestAO20));
       }
       
       document.addEventListener('keyup', function(event) {
