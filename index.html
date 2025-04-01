@@ -227,9 +227,14 @@
       
       function loadCubeTypeData() {
         let cubeType = document.getElementById("cubeType").value || "Default";
+    
+        if (!times[cubeType]) times[cubeType] = [];
+        if (bestTime[cubeType] === undefined) bestTime[cubeType] = Infinity;
+        if (bestTime[cubeType] === undefined) console.log("Best time for " + cubeType + "is null")
         updateDisplay(cubeType);
         updateStats(cubeType);
       }
+
 
       function updateStats(cubeType) {
         let AO5 = bestAO5[cubeType] || Infinity;
@@ -242,33 +247,33 @@
           bestTime[cubeType] = time;
         }
         document.getElementById("currentTime").textContent = parseFloat(document.getElementById("timer").textContent);
-        document.getElementById("bestTime").textContent = time.toFixed(2);
+        document.getElementById("bestTime").textContent = time !== Infinity ? time.toFixed(2) : "N/A";
 
-        let ao5 = " ";
+        let ao5 = "N/A";
         if (allTimes.length >= 5) {
           let l5 = allTimes.slice(-5);
           ao5 = (l5.reduce((a, b) => a + b, 0) / 5).toFixed(2);
         }
         document.getElementById("currentAO5").textContent = ao5;
-        if (ao5 !== " " && parseFloat(ao5) < AO5) {
+        if (ao5 !== "N/A" && parseFloat(ao5) < AO5) {
           AO5 = parseFloat(ao5);
           bestAO5[cubeType] = AO5;
         }
-        document.getElementById("bestAO5").textContent = AO5 !== Infinity ? AO5.toFixed(2) : " ";
+        document.getElementById("bestAO5").textContent = AO5 !== Infinity ? AO5.toFixed(2) : "N/A";
 
-        let ao20 = " ";
+        let ao20 = "N/A";
         if (allTimes.length >= 20) {
           let l20 = allTimes.slice(-20);
           ao20 = (l20.reduce((a, b) => a + b, 0) / 20).toFixed(2);
         }
         document.getElementById("currentAO20").textContent = ao20;
-        if (ao20 !== " " && parseFloat(ao20) < AO20) {
+        if (ao20 !== "N/A" && parseFloat(ao20) < AO20) {
           AO20 = parseFloat(ao20);
           bestAO20[cubeType] = AO20;
         }
-        document.getElementById("bestAO20").textContent = AO20 !== Infinity ? AO20.toFixed(2) : " ";
+        document.getElementById("bestAO20").textContent = AO20 !== Infinity ? AO20.toFixed(2) : "N/A";
 
-        saveData(); // Save updated data
+        saveData();
       }
 
       function startTimer() {
