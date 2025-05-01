@@ -321,7 +321,7 @@
         allTimes.forEach((time, index) => {
           let newRow = tableBody.insertRow();
           newRow.addEventListener("click", function(){
-             allTimes.removeAt(allTimes.indexOf(time));
+             allTimes[cubeType].removeAt(allTimes[cubeType].indexOf(time));
              updateDisplay(cubeType);
           });
           newRow.insertCell(0).textContent = index + 1;
