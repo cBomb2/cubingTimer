@@ -320,6 +320,10 @@
         let allTimes = times[cubeType] || [];
         allTimes.forEach((time, index) => {
           let newRow = tableBody.insertRow();
+          newRow.addEventListner("click", function(){
+             allTimes.removeAt(allTimes.indexOf(time));
+             updateDisplay(cubeType);
+          });
           newRow.insertCell(0).textContent = index + 1;
           newRow.insertCell(1).textContent = time.toFixed(2);
         });
