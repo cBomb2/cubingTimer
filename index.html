@@ -320,7 +320,7 @@
         let allTimes = times[cubeType] || [];
         allTimes.forEach((time, index) => {
           let newRow = tableBody.insertRow();
-          newRow.addEventListner("click", function(){
+          newRow.addEventListener("click", function(){
              allTimes.removeAt(allTimes.indexOf(time));
              updateDisplay(cubeType);
           });
